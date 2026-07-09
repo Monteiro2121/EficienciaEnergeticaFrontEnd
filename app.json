@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "SEAD Enquadramento Tarifário",
+    "slug": "sead-enquadramento-tarifario",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#0B3B60"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "br.gov.se.sead.enquadramento"
+    },
+    "android": {
+      "package": "br.gov.se.sead.enquadramento",
+      "adaptiveIcon": {
+        "backgroundColor": "#0B3B60"
+      }
+    }
+  }
+}
