@@ -57,6 +57,7 @@ export interface FaturaExtraida {
   tarifa_unit_demanda_fora_ponta: number | null;
   tarifa_unit_consumo_ponta: number | null;
   tarifa_unit_consumo_fora_ponta: number | null;
+  historico_12_mese?: HistoricoMes[] | null;
 }
 
 export interface FaturasExtraidasResponse {
@@ -66,13 +67,34 @@ export interface FaturasExtraidasResponse {
   erro: string | null;
 }
 
+export interface ComparacaoModalidades {
+  meses: string[];
+  verde: number[];
+  azul: (number | null)[];
+  optante_b: (number | null)[];
+  azul_confirmada: boolean;
+  totais: {
+    verde: number;
+    azul: number | null;
+    optante_b: number | null;
+  };
+  quadro_comparativo: {
+    verde_vs_azul: number | null;
+    verde_vs_optante_b: number | null;
+    azul_vs_optante_b: number | null;
+  };
+  novo_grupo_escolhido: 'verde' | 'azul' | 'optante_b' | null;
+  aviso: string | null;
+}
+
 export interface ResultadoEnquadramento {
   qtd_meses_considerados: number;
   base_calculo: 'EXTRAPOLADO_1_MES' | 'MEDIA_ACUMULADA' | 'ANO_FECHADO';
+  confianca: 'BAIXA' | 'MEDIA' | 'ALTA' | 'MAXIMA';
   tarifa_usada: {
     origem: string;
     demanda_ativa: number;
-    demanda_ultrapassagem_assumida: number;
+    demanda_ultrapassagem_confirmada: number;
     consumo_ponta: number;
     consumo_fora_ponta: number;
   };
@@ -83,5 +105,16 @@ export interface ResultadoEnquadramento {
   economia_media_mensal: number;
   economia_total_anual_estimada: number;
   custo_total_anual_estimado: number;
+  comparacao_modalidades: ComparacaoModalidades;
   texto_recomendacao: string;
+}
+
+export interface HistoricoMes {
+  mes: string;
+  consumo_ponta_kwh?: number | null;
+  demanda_medida_ponta_kw?: number | null;
+  consumo_fora_ponta_kwh?: number | null;
+  demanda_medida_fora_ponta_kw?: number | null;
+  consumo_faturado_kwh?: number | null; // Grupo B
+  estimado?: boolean;
 }

@@ -10,11 +10,16 @@ export const cores = {
   azulTarifa: '#2B6FB0',     // azul mais claro (tarifa Azul, pra diferenciar do institucional)
   alerta: '#C0392B',
   aviso: '#B8860B',
+  optanteB: '#333333', 
 
   fundo: '#F4F6F8',
   cartao: '#FFFFFF',
   borda: '#E1E5EA',
-
+  
+  pastelVerde: '#E8F5EC',
+  pastelAzul: '#E7F0FA',
+  pastelCinza: '#EDEDED',
+  
   textoPrimario: '#1A1F26',
   textoSecundario: '#5B6472',
   textoClaro: '#FFFFFF',

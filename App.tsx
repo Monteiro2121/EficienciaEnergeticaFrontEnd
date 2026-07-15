@@ -5,18 +5,21 @@ import { cores } from './src/theme/theme';
 import UploadScreen from './src/screens/UploadScreen';
 import ConferenciaScreen from './src/screens/ConferenciaScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
-import { FaturaExtraida } from './src/api/types';
+import GraficoScreen from './src/screens/GraphicScreen';
+import { FaturaExtraida, ResultadoEnquadramento } from './src/api/types';
 
-type Tela = 'UPLOAD' | 'CONFERENCIA' | 'DASHBOARD';
+type Tela = 'UPLOAD' | 'CONFERENCIA' | 'DASHBOARD' | 'GRAFICO';
 
 export default function App() {
   const [tela, setTela] = useState<Tela>('UPLOAD');
   const [faturasExtraidas, setFaturasExtraidas] = useState<FaturaExtraida[]>([]);
   const [faturaConfirmada, setFaturaConfirmada] = useState<FaturaExtraida | null>(null);
+  const [resultadoEnquadramento, setResultadoEnquadramento] = useState<ResultadoEnquadramento | null>(null);
 
   function reiniciar() {
     setFaturasExtraidas([]);
     setFaturaConfirmada(null);
+    setResultadoEnquadramento(null);
     setTela('UPLOAD');
   }
 
@@ -48,7 +51,21 @@ export default function App() {
       )}
 
       {tela === 'DASHBOARD' && faturaConfirmada && (
-        <DashboardScreen fatura={faturaConfirmada} aoVoltar={reiniciar} />
+        <DashboardScreen
+          fatura={faturaConfirmada}
+          aoVoltar={reiniciar}
+          aoVerGrafico={(resultado) => {
+            setResultadoEnquadramento(resultado);
+            setTela('GRAFICO');
+          }}
+        />
+      )}
+
+      {tela === 'GRAFICO' && resultadoEnquadramento && (
+        <GraficoScreen
+          comparacao={resultadoEnquadramento.comparacao_modalidades}
+          aoVoltar={() => setTela('DASHBOARD')}
+        />
       )}
     </SafeAreaView>
   );

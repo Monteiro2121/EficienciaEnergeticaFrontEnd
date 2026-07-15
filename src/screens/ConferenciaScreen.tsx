@@ -18,11 +18,59 @@ function Campo({ label, valor }: { label: string; valor: string | number | null 
   );
 }
 
+function abreviarMes(mesReferencia: string | null | undefined): string {
+  if (!mesReferencia) return '?';
+  const [nome, ano] = mesReferencia.split('/');
+  if (!nome || !ano) return mesReferencia;
+  return `${nome.slice(0, 3).toUpperCase()}/${ano.slice(-2)}`;
+}
+
+/** Gráfico de barras do histórico de Consumo Fora Ponta (12 meses da página 2
+ * + o mês da fatura atual) -- feito só com View, sem lib de gráfico nenhuma
+ * (mesma decisão do GraficoScreen: victory-native não roda no Expo Go). */
+function GraficoConsumoHistorico({ fatura }: { fatura: FaturaExtraida }) {
+  const historico = fatura.historico_12_meses ?? [];
+  if (historico.length === 0) return null;
+
+  const pontos = [
+    ...historico.map((h) => ({ mes: h.mes, valor: h.consumo_fora_ponta_kwh ?? 0 })),
+    { mes: abreviarMes(fatura.mes_referencia), valor: fatura.consumo_fora_ponta_kwh ?? 0 },
+  ];
+  const maiorValor = Math.max(...pontos.map((p) => p.valor), 1);
+  const ALTURA_MAXIMA = 100;
+
+  return (
+    <View style={estilos.cartao}>
+      <Text style={estilos.tituloSecao}>Histórico de consumo </Text>
+      <Text style={estilos.legendaGraficoHist}>Média de consumo igual a: X</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator>
+        <View style={estilos.areaGraficoHist}>
+          {pontos.map((p, i) => (
+            <View key={`${p.mes}-${i}`} style={estilos.colunaMesHist}>
+              <View
+                style={[
+                  estilos.barraHist,
+                  { height: (p.valor / maiorValor) * ALTURA_MAXIMA },
+                  i === pontos.length - 1 && estilos.barraHistAtual,
+                ]}
+              />
+              <Text style={estilos.labelMesHist}>{p.mes}</Text>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+      <Text style={estilos.legendaGraficoHist}>Demanda Contratada (Fora Ponta kWh)</Text>
+    </View>
+  );
+}
+
 export default function ConferenciaScreen({ faturas, aoConfirmar, aoVoltar }: Props) {
   const [selecionada, setSelecionada] = useState<FaturaExtraida | null>(
     faturas.length === 1 ? faturas[0] : null
   );
-  const [demandaCorrigida, setDemandaCorrigida] = useState<string>('');
+  const [demandaCorrigida, setDemandaCorrigida] = useState<string>(
+    faturas.length === 1 ? String(faturas[0].demanda_contratada_fora_ponta_kw ?? '') : ''
+  );
 
   // Tela de seleção -- só aparece quando o PDF trouxe mais de 1 fatura (Fatura Unificada)
   if (!selecionada) {
@@ -93,22 +141,26 @@ export default function ConferenciaScreen({ faturas, aoConfirmar, aoVoltar }: Pr
       </View>
 
       {f.grupo_tarifario === 'A' ? (
-        <View style={estilos.cartao}>
-          <Text style={estilos.tituloSecao}>Consumo e demanda</Text>
-          <Campo label="Consumo Ponta" valor={f.consumo_ponta_kwh != null ? `${f.consumo_ponta_kwh} kWh` : null} />
-          <Campo label="Consumo Fora Ponta" valor={f.consumo_fora_ponta_kwh != null ? `${f.consumo_fora_ponta_kwh} kWh` : null} />
-          <Campo label="Demanda medida (Fora Ponta)" valor={f.demanda_medida_fora_ponta_kw != null ? `${f.demanda_medida_fora_ponta_kw} kW` : null} />
+        <>
+          <View style={estilos.cartao}>
+            <Text style={estilos.tituloSecao}>Consumo e demanda</Text>
+            <Campo label="Consumo Ponta" valor={f.consumo_ponta_kwh != null ? `${f.consumo_ponta_kwh} kWh` : null} />
+            <Campo label="Consumo Fora Ponta" valor={f.consumo_fora_ponta_kwh != null ? `${f.consumo_fora_ponta_kwh} kWh` : null} />
+            <Campo label="Demanda medida (Fora Ponta)" valor={f.demanda_medida_fora_ponta_kw != null ? `${f.demanda_medida_fora_ponta_kw} kW` : null} />
 
-          <View style={estilos.linhaCampoEditavel}>
-            <Text style={estilos.labelCampo}>Demanda contratada (Fora Ponta)</Text>
-            <TextInput
-              style={estilos.input}
-              value={demandaCorrigida}
-              onChangeText={setDemandaCorrigida}
-              keyboardType="numeric"
-            />
+            <View style={estilos.linhaCampoEditavel}>
+              <Text style={estilos.labelCampo}>Demanda contratada (Fora Ponta)</Text>
+              <TextInput
+                style={estilos.input}
+                value={demandaCorrigida}
+                onChangeText={setDemandaCorrigida}
+                keyboardType="numeric"
+              />
+            </View>
           </View>
-        </View>
+
+          <GraficoConsumoHistorico fatura={f} />
+        </>
       ) : (
         <View style={estilos.avisoGrupoB}>
           <Text style={estilos.textoAvisoGrupoB}>
@@ -192,6 +244,13 @@ const estilos = StyleSheet.create({
     marginTop: espacamento.xs,
     fontSize: tipografia.corpo,
   },
+
+  areaGraficoHist: { flexDirection: 'row', alignItems: 'flex-end', paddingTop: espacamento.sm },
+  colunaMesHist: { alignItems: 'center', marginHorizontal: -2.7, width: 34, marginBottom: 10, marginTop: -15 },
+  barraHist: { width: 14, backgroundColor: cores.azulTarifa, opacity: 0.5, borderRadius: 2 },
+  barraHistAtual: { backgroundColor: cores.primaria, opacity: 1 },
+  labelMesHist: { fontSize: 8, color: cores.textoSecundario, marginTop: 10, transform: [{ rotate: '-45deg' }] },
+  legendaGraficoHist: { fontSize: 10, color: cores.textoSecundario, fontStyle: 'italic', marginTop: 8 },
 
   avisoGrupoB: {
     backgroundColor: '#FFF7E6',

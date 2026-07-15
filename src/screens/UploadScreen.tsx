@@ -64,6 +64,20 @@ export default function UploadScreen({ aoExtrairComSucesso }: Props) {
           <Text style={estilos.nomeArquivo}>Último arquivo: {nomeArquivo}</Text>
         )}
       </View>
+
+      <View style={estilos.cartao}>
+        <TouchableOpacity
+          style={estilos.botaoPrimario}
+          onPress={selecionarEEnviarPdf}
+          disabled={carregando}
+        >
+          {carregando ? (
+            <ActivityIndicator color={cores.textoClaro} />
+          ) : (
+            <Text style={estilos.textoBotaoPrimario}>Inserir Manualmente</Text>
+          )}
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
@@ -81,6 +95,7 @@ const estilos = StyleSheet.create({
     padding: espacamento.lg,
     borderWidth: 1,
     borderColor: cores.borda,
+    marginBottom: 40
   },
   titulo: {
     fontSize: tipografia.titulo,
