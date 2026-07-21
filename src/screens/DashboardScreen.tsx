@@ -114,43 +114,58 @@ export default function DashboardScreen({ fatura, aoVoltar, aoVerGrafico }: Prop
       </View>
 
       {modalidade === 'AZUL' && !comparacao.azul_confirmada && (
-        <View>
+        <View style={estilos.avisoEstimativa}>
+          <Text style={estilos.textoAvisoEstimativa}>
+            Tarifa Azul ainda usa valores ESTIMADOS (não confirmados contra fatura real) --
+            trate como referência aproximada.
+          </Text>
         </View>
       )}
       {modalidade === 'OPTANTE_B' && (
         <View style={estilos.avisoEstimativa}>
           <Text style={estilos.textoAvisoEstimativa}>
-            Confirme a elegibilidade antes de considerar essa troca.
+            Optante B só é permitido pra UCs com transformador ≤ 112,5 kVA, hotel em área
+            turística, ou estádio/feira agropecuária (Art. 292 REN 1.000/2021 ANEEL). Confirme
+            a elegibilidade antes de considerar essa troca.
           </Text>
         </View>
       )}
 
       {modalidade === 'VERDE' ? (
         <>
-          <View style={estilos.grade}>
-            <View style={estilos.cartaoMetrica}>
-              <Text style={estilos.labelMetrica}>Demanda ideal</Text>
-              <Text style={estilos.valorMetrica}>{resultado.demanda_ideal_fora_ponta_kw} kW</Text>
-              <Text style={estilos.legendaMetrica}>atual: {resultado.demanda_atual_contratada_kw} kW</Text>
+          <View style={estilos.cartaoPrePos}>
+            <Text style={estilos.tituloPrePos}>Antes → Depois do enquadramento</Text>
+            <View style={estilos.linhaPrePos}>
+              <View style={estilos.colunaPrePos}>
+                <Text style={estilos.labelPrePos}>HOJE</Text>
+                <Text style={estilos.valorPrePosDemanda}>{resultado.demanda_atual_contratada_kw} kW</Text>
+                <Text style={estilos.valorPrePosCusto}>R$ {resultado.custo_atual_anual_estimado.toFixed(2)}/ano</Text>
+              </View>
+              <Text style={estilos.setaPrePos}>→</Text>
+              <View style={estilos.colunaPrePos}>
+                <Text style={estilos.labelPrePos}>RECOMENDADO</Text>
+                <Text style={[estilos.valorPrePosDemanda, estilos.valorPositivo]}>
+                  {resultado.demanda_ideal_fora_ponta_kw} kW
+                </Text>
+                <Text style={[estilos.valorPrePosCusto, estilos.valorPositivo]}>
+                  R$ {resultado.custo_total_anual_estimado.toFixed(2)}/ano
+                </Text>
+              </View>
             </View>
+          </View>
+
+          <View style={estilos.grade}>
             <View style={estilos.cartaoMetrica}>
               <Text style={estilos.labelMetrica}>Economia média mensal</Text>
               <Text style={[estilos.valorMetrica, estilos.valorPositivo]}>
                 R$ {resultado.economia_media_mensal.toFixed(2)}
               </Text>
             </View>
-          </View>
-
-          <View style={estilos.grade}>
             <View style={estilos.cartaoMetrica}>
               <Text style={estilos.labelMetrica}>Economia total anual (estimada)</Text>
               <Text style={[estilos.valorMetrica, estilos.valorPositivo]}>
                 R$ {resultado.economia_total_anual_estimada.toFixed(2)}
               </Text>
-            </View>
-            <View style={estilos.cartaoMetrica}>
-              <Text style={estilos.labelMetrica}>Custo total anual (estimado)</Text>
-              <Text style={estilos.valorMetrica}>R$ {resultado.custo_total_anual_estimado.toFixed(2)}</Text>
             </View>
           </View>
 
@@ -238,6 +253,29 @@ const estilos = StyleSheet.create({
   toggleBotaoAtivo: { backgroundColor: cores.secundaria },
   toggleTexto: { fontWeight: '600', color: cores.textoSecundario, fontSize: tipografia.legenda },
   toggleTextoAtivo: { color: cores.textoClaro },
+
+  cartaoPrePos: {
+    backgroundColor: cores.cartao,
+    borderRadius: 12,
+    padding: espacamento.md,
+    marginBottom: espacamento.md,
+    borderWidth: 1,
+    borderColor: cores.borda,
+  },
+  tituloPrePos: {
+    fontSize: tipografia.legenda,
+    fontWeight: '700',
+    color: cores.textoSecundario,
+    textAlign: 'center',
+    marginBottom: espacamento.sm,
+    textTransform: 'uppercase',
+  },
+  linhaPrePos: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  colunaPrePos: { flex: 1, alignItems: 'center' },
+  setaPrePos: { fontSize: 20, color: cores.textoSecundario, paddingHorizontal: espacamento.sm },
+  labelPrePos: { fontSize: 10, fontWeight: '700', color: cores.textoSecundario, marginBottom: espacamento.xs },
+  valorPrePosDemanda: { fontSize: tipografia.subtitulo, fontWeight: '700', color: cores.textoPrimario },
+  valorPrePosCusto: { fontSize: 12, color: cores.textoSecundario, marginTop: 2 },
 
   grade: { flexDirection: 'row', gap: espacamento.sm, marginBottom: espacamento.sm },
   cartaoMetrica: {

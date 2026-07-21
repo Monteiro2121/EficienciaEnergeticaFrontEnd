@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Switch } from 'react-native';
 import { cores, espacamento, tipografia } from '../theme/theme';
 import { FaturaExtraida } from '../api/types';
 
 type Props = {
   faturas: FaturaExtraida[];
   aoConfirmar: (fatura: FaturaExtraida) => void;
+  aoConfirmarGrupoB: (
+    fatura: FaturaExtraida,
+    horaAbertura: string,
+    horaFechamento: string,
+    funcionaFimDeSemana: boolean
+  ) => void;
   aoVoltar: () => void;
 };
 
@@ -18,6 +24,9 @@ function Campo({ label, valor }: { label: string; valor: string | number | null 
   );
 }
 
+/** O histórico vem como "JUN/26" (abreviado), mas mes_referencia da fatura
+ * atual vem como "Junho/2026" (nome completo) -- sem isso, o rótulo do mês
+ * atual fica bem maior que os outros e desalinha a coluna no gráfico. */
 function abreviarMes(mesReferencia: string | null | undefined): string {
   if (!mesReferencia) return '?';
   const [nome, ano] = mesReferencia.split('/');
@@ -41,8 +50,7 @@ function GraficoConsumoHistorico({ fatura }: { fatura: FaturaExtraida }) {
 
   return (
     <View style={estilos.cartao}>
-      <Text style={estilos.tituloSecao}>Histórico de consumo </Text>
-      <Text style={estilos.legendaGraficoHist}>Média de consumo igual a: X</Text>
+      <Text style={estilos.tituloSecao}>Histórico de consumo -- Fora Ponta (kWh)</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator>
         <View style={estilos.areaGraficoHist}>
           {pontos.map((p, i) => (
@@ -59,18 +67,21 @@ function GraficoConsumoHistorico({ fatura }: { fatura: FaturaExtraida }) {
           ))}
         </View>
       </ScrollView>
-      <Text style={estilos.legendaGraficoHist}>Demanda Contratada (Fora Ponta kWh)</Text>
+      <Text style={estilos.legendaGraficoHist}>Barra mais escura = mês da fatura atual</Text>
     </View>
   );
 }
 
-export default function ConferenciaScreen({ faturas, aoConfirmar, aoVoltar }: Props) {
+export default function ConferenciaScreen({ faturas, aoConfirmar, aoConfirmarGrupoB, aoVoltar }: Props) {
   const [selecionada, setSelecionada] = useState<FaturaExtraida | null>(
     faturas.length === 1 ? faturas[0] : null
   );
   const [demandaCorrigida, setDemandaCorrigida] = useState<string>(
     faturas.length === 1 ? String(faturas[0].demanda_contratada_fora_ponta_kw ?? '') : ''
   );
+  const [horaAbertura, setHoraAbertura] = useState('08:00');
+  const [horaFechamento, setHoraFechamento] = useState('18:00');
+  const [funcionaFimDeSemana, setFuncionaFimDeSemana] = useState(false);
 
   // Tela de seleção -- só aparece quando o PDF trouxe mais de 1 fatura (Fatura Unificada)
   if (!selecionada) {
@@ -162,12 +173,43 @@ export default function ConferenciaScreen({ faturas, aoConfirmar, aoVoltar }: Pr
           <GraficoConsumoHistorico fatura={f} />
         </>
       ) : (
-        <View style={estilos.avisoGrupoB}>
-          <Text style={estilos.textoAvisoGrupoB}>
-            Essa UC é Grupo B (baixa tensão) -- não existe Verde/Azul pra comparar, então não há
-            enquadramento a fazer aqui. Os dados acima já estão conferidos.
-          </Text>
-        </View>
+        <>
+          <View style={estilos.avisoGrupoB}>
+            <Text style={estilos.textoAvisoGrupoB}>
+              Essa UC é Grupo B (baixa tensão) -- pra comparar Convencional x Tarifa Branca,
+              informe o horário de funcionamento da unidade.
+              {f.faturamento_minimo && ' Atenção: essa UC está no faturamento mínimo -- normalmente não compensa trocar de tarifa nesse caso.'}
+            </Text>
+          </View>
+
+          <View style={estilos.cartao}>
+            <Text style={estilos.tituloSecao}>Horário de funcionamento</Text>
+            <View style={estilos.linhaCampoEditavel}>
+              <Text style={estilos.labelCampo}>Abertura (HH:MM)</Text>
+              <TextInput
+                style={estilos.input}
+                value={horaAbertura}
+                onChangeText={setHoraAbertura}
+                placeholder="08:00"
+                keyboardType="numbers-and-punctuation"
+              />
+            </View>
+            <View style={estilos.linhaCampoEditavel}>
+              <Text style={estilos.labelCampo}>Fechamento (HH:MM)</Text>
+              <TextInput
+                style={estilos.input}
+                value={horaFechamento}
+                onChangeText={setHoraFechamento}
+                placeholder="18:00"
+                keyboardType="numbers-and-punctuation"
+              />
+            </View>
+            <View style={estilos.linhaSwitch}>
+              <Text style={estilos.labelCampo}>Funciona fim de semana?</Text>
+              <Switch value={funcionaFimDeSemana} onValueChange={setFuncionaFimDeSemana} />
+            </View>
+          </View>
+        </>
       )}
 
       <View style={estilos.botoesRodape}>
@@ -184,6 +226,15 @@ export default function ConferenciaScreen({ faturas, aoConfirmar, aoVoltar }: Pr
                 demanda_contratada_fora_ponta_kw: parseFloat(demandaCorrigida) || f.demanda_contratada_fora_ponta_kw,
               })
             }
+          >
+            <Text style={estilos.textoBotaoPrimario}>Realizar Enquadramento</Text>
+          </TouchableOpacity>
+        )}
+
+        {f.grupo_tarifario === 'B' && (
+          <TouchableOpacity
+            style={estilos.botaoPrimario}
+            onPress={() => aoConfirmarGrupoB(f, horaAbertura, horaFechamento, funcionaFimDeSemana)}
           >
             <Text style={estilos.textoBotaoPrimario}>Realizar Enquadramento</Text>
           </TouchableOpacity>
@@ -234,6 +285,12 @@ const estilos = StyleSheet.create({
   linhaCampoEditavel: {
     paddingVertical: espacamento.xs,
   },
+  linhaSwitch: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: espacamento.sm,
+  },
   labelCampo: { fontSize: tipografia.legenda, color: cores.textoSecundario, flex: 1 },
   valorCampo: { fontSize: tipografia.corpo, color: cores.textoPrimario, fontWeight: '600', flex: 1, textAlign: 'right' },
   input: {
@@ -246,11 +303,11 @@ const estilos = StyleSheet.create({
   },
 
   areaGraficoHist: { flexDirection: 'row', alignItems: 'flex-end', paddingTop: espacamento.sm },
-  colunaMesHist: { alignItems: 'center', marginHorizontal: -2.7, width: 34, marginBottom: 10, marginTop: -15 },
+  colunaMesHist: { alignItems: 'center', marginHorizontal: 4, width: 34 },
   barraHist: { width: 14, backgroundColor: cores.azulTarifa, opacity: 0.5, borderRadius: 2 },
   barraHistAtual: { backgroundColor: cores.primaria, opacity: 1 },
-  labelMesHist: { fontSize: 8, color: cores.textoSecundario, marginTop: 10, transform: [{ rotate: '-45deg' }] },
-  legendaGraficoHist: { fontSize: 10, color: cores.textoSecundario, fontStyle: 'italic', marginTop: 8 },
+  labelMesHist: { fontSize: 8, color: cores.textoSecundario, marginTop: 4, transform: [{ rotate: '-45deg' }] },
+  legendaGraficoHist: { fontSize: 10, color: cores.textoSecundario, fontStyle: 'italic', marginTop: espacamento.sm },
 
   avisoGrupoB: {
     backgroundColor: '#FFF7E6',

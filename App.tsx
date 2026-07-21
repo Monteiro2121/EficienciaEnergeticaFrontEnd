@@ -5,21 +5,29 @@ import { cores } from './src/theme/theme';
 import UploadScreen from './src/screens/UploadScreen';
 import ConferenciaScreen from './src/screens/ConferenciaScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
+import DashboardGrupoBScreen from './src/screens/DashboardBScreen';
 import GraficoScreen from './src/screens/GraphicScreen';
 import { FaturaExtraida, ResultadoEnquadramento } from './src/api/types';
 
-type Tela = 'UPLOAD' | 'CONFERENCIA' | 'DASHBOARD' | 'GRAFICO';
+type Tela = 'UPLOAD' | 'CONFERENCIA' | 'DASHBOARD' | 'DASHBOARD_B' | 'GRAFICO';
 
 export default function App() {
   const [tela, setTela] = useState<Tela>('UPLOAD');
   const [faturasExtraidas, setFaturasExtraidas] = useState<FaturaExtraida[]>([]);
   const [faturaConfirmada, setFaturaConfirmada] = useState<FaturaExtraida | null>(null);
   const [resultadoEnquadramento, setResultadoEnquadramento] = useState<ResultadoEnquadramento | null>(null);
+  const [dadosGrupoB, setDadosGrupoB] = useState<{
+    fatura: FaturaExtraida;
+    horaAbertura: string;
+    horaFechamento: string;
+    funcionaFimDeSemana: boolean;
+  } | null>(null);
 
   function reiniciar() {
     setFaturasExtraidas([]);
     setFaturaConfirmada(null);
     setResultadoEnquadramento(null);
+    setDadosGrupoB(null);
     setTela('UPLOAD');
   }
 
@@ -47,6 +55,10 @@ export default function App() {
             setFaturaConfirmada(fatura);
             setTela('DASHBOARD');
           }}
+          aoConfirmarGrupoB={(fatura, horaAbertura, horaFechamento, funcionaFimDeSemana) => {
+            setDadosGrupoB({ fatura, horaAbertura, horaFechamento, funcionaFimDeSemana });
+            setTela('DASHBOARD_B');
+          }}
         />
       )}
 
@@ -58,6 +70,16 @@ export default function App() {
             setResultadoEnquadramento(resultado);
             setTela('GRAFICO');
           }}
+        />
+      )}
+
+      {tela === 'DASHBOARD_B' && dadosGrupoB && (
+        <DashboardGrupoBScreen
+          fatura={dadosGrupoB.fatura}
+          horaAbertura={dadosGrupoB.horaAbertura}
+          horaFechamento={dadosGrupoB.horaFechamento}
+          funcionaFimDeSemana={dadosGrupoB.funcionaFimDeSemana}
+          aoVoltar={reiniciar}
         />
       )}
 

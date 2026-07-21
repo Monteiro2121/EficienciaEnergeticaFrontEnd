@@ -87,6 +87,27 @@ export interface ComparacaoModalidades {
   aviso: string | null;
 }
 
+export interface ResultadoEnquadramentoGrupoB {
+  subgrupo: string | null;
+  qtd_meses_considerados: number;
+  consumo_medio_mensal_kwh: number;
+  faturamento_minimo: boolean | null;
+  fracoes_horario: {
+    ponta: number;
+    intermediario: number;
+    fora_ponta: number;
+  };
+  custo_mensal_convencional: number;
+  custo_mensal_branca: number;
+  custo_anual_convencional: number;
+  custo_anual_branca: number;
+  diferenca_mensal: number;
+  diferenca_anual: number;
+  vale_a_pena_trocar: boolean;
+  avisos: string[];
+  texto_recomendacao: string;
+}
+
 export interface ResultadoEnquadramento {
   qtd_meses_considerados: number;
   base_calculo: 'EXTRAPOLADO_1_MES' | 'MEDIA_ACUMULADA' | 'ANO_FECHADO';

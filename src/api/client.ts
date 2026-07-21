@@ -1,5 +1,4 @@
-import { FaturaExtraida, FaturasExtraidasResponse, ResultadoEnquadramento } from './types';
-
+import { FaturaExtraida, FaturasExtraidasResponse, ResultadoEnquadramento, ResultadoEnquadramentoGrupoB } from './types';
 /**
  * IMPORTANTE -- endereço do backend:
  * - Emulador Android: 'localhost' do PC NÃO funciona dentro do emulador.
@@ -46,6 +45,27 @@ export async function extrairFaturas(uri: string, nomeArquivo: string): Promise<
   });
 
   return tratarResposta<FaturasExtraidasResponse>(resposta);
+}
+
+/** UC05/UC06 pra Grupo B -- Convencional x Tarifa Branca. */
+export async function realizarEnquadramentoGrupoB(
+  fatura: FaturaExtraida,
+  horaAbertura: string,
+  horaFechamento: string,
+  funcionaFimDeSemana: boolean
+): Promise<ResultadoEnquadramentoGrupoB> {
+  const resposta = await fetch(`${API_BASE_URL}/enquadramentos-grupo-b`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      fatura,
+      hora_abertura: horaAbertura,
+      hora_fechamento: horaFechamento,
+      funciona_fim_de_semana: funcionaFimDeSemana,
+    }),
+  });
+
+  return tratarResposta<ResultadoEnquadramentoGrupoB>(resposta);
 }
 
 /** UC05/UC06 -- envia 1+ faturas conferidas de uma UC e recebe o enquadramento. */
